@@ -96,6 +96,11 @@ def today_api_spend_usd(conn: sqlite3.Connection, date_str: str) -> float:
     return row["s"]
 
 
+def total_api_spend_usd(conn: sqlite3.Connection) -> float:
+    row = conn.execute("SELECT COALESCE(SUM(api_cost_usd), 0) AS s FROM forecasts").fetchone()
+    return row["s"]
+
+
 def mark_settled(conn: sqlite3.Connection, ticker: str, outcome: int, settled_ts: str,
                   score_gap, divergence, fee_paid_usd, realized_pnl_usd) -> int:
     cur = conn.execute(

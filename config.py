@@ -50,17 +50,22 @@ REFORECAST_MIN_PRICE_MOVE = 0.10
 REFORECAST_MAX_AGE_HOURS = 24.0
 
 # --- Forecaster (Claude API) ---
-FORECASTER_MODEL = "claude-opus-5"
+# Sonnet 5, not Opus 5 — user-funded $20 budget, judicious spend requested.
+FORECASTER_MODEL = "claude-sonnet-5"
 FORECASTER_EFFORT = "high"          # paper's Gemini deployment used high-effort thinking
 WEB_SEARCH_MAX_USES = 3
 FORECASTER_MAX_TOKENS = 4000
 
-# claude-opus-5 pricing, $/1M tokens (see ref_kalshi_research memory / claude-api skill, cached 2026-06-24)
-PRICE_INPUT_PER_MTOK = 5.00
-PRICE_OUTPUT_PER_MTOK = 25.00
+# claude-sonnet-5 pricing, $/1M tokens (claude-api skill, verified 2026-09-04)
+PRICE_INPUT_PER_MTOK = 2.00
+PRICE_OUTPUT_PER_MTOK = 10.00
 
-# Hard spend caps — independent safety valves, both enforced every cycle.
-MAX_DAILY_API_SPEND_USD = 5.00
+# Hard spend caps — independent safety valves, all enforced every cycle.
+# MAX_TOTAL_API_SPEND_USD is the hard backstop against the funded $20 key;
+# MAX_DAILY_API_SPEND_USD paces it out over ~10 cycles instead of burning
+# the whole budget in one or two days.
+MAX_DAILY_API_SPEND_USD = 2.00
+MAX_TOTAL_API_SPEND_USD = 18.00     # leave ~$2 headroom under the $20 funded
 MAX_FORECASTS_PER_CYCLE = 60
 
 # --- Shadow position sizing (risk-management free parameter — NOT part of the

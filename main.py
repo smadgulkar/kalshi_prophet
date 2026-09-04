@@ -19,15 +19,19 @@ from datetime import datetime, timedelta, timezone
 from logging.handlers import RotatingFileHandler
 
 from config import (
-    EXCLUDED_CATEGORIES, LOG_PATH, MAX_BET_FRACTION, MAX_DAILY_API_SPEND_USD,
-    MAX_DAYS_TO_CLOSE, MAX_FORECASTS_PER_CYCLE, MIN_HOURS_TO_CLOSE,
-    REFORECAST_MAX_AGE_HOURS, REFORECAST_MIN_PRICE_MOVE, SERIES_CACHE_MAX_AGE_DAYS,
-    SERIES_CACHE_PATH, SHADOW_BANKROLL_USD,
+    EXCLUDED_CATEGORIES, FORECASTER_MODEL, LOG_PATH, MAX_BET_FRACTION,
+    MAX_DAILY_API_SPEND_USD, MAX_DAYS_TO_CLOSE, MAX_FORECASTS_PER_CYCLE,
+    MAX_TOTAL_API_SPEND_USD, MIN_HOURS_TO_CLOSE, REFORECAST_MAX_AGE_HOURS,
+    REFORECAST_MIN_PRICE_MOVE, SERIES_CACHE_MAX_AGE_DAYS, SERIES_CACHE_PATH,
+    SHADOW_BANKROLL_USD,
 )
 from forecaster import forecast_market
 from kalshi import fetch_markets_by_tickers, fetch_open_markets, fetch_series_catalog
 from proper_betting import decide_trade, realized_pnl, size_contracts, brier_score, bregman_divergence_brier, taker_fee_dollars
-from store import db, insert_forecast, last_forecast_for_ticker, mark_settled, today_api_spend_usd
+from store import (
+    db, insert_forecast, last_forecast_for_ticker, mark_settled,
+    today_api_spend_usd, total_api_spend_usd,
+)
 
 log = logging.getLogger("prophet")
 
@@ -93,6 +97,7 @@ def cmd_cycle() -> None:
 
     with db() as conn:
         spend_today = today_api_spend_usd(conn, today)
+        spend_total = total_api_spend_usd(conn)
 
         for m in eligible:
             series_ticker, category = m.series_ticker, m.category
@@ -101,6 +106,10 @@ def cmd_cycle() -> None:
                 break
             if spend_today >= MAX_DAILY_API_SPEND_USD:
                 log.info("hit MAX_DAILY_API_SPEND_USD ($%.2f), stopping", MAX_DAILY_API_SPEND_USD)
+                break
+            if spend_total >= MAX_TOTAL_API_SPEND_USD:
+                log.info("hit MAX_TOTAL_API_SPEND_USD ($%.2f) — lifetime cap, stopping "
+                          "for good until config is raised", MAX_TOTAL_API_SPEND_USD)
                 break
 
             last = last_forecast_for_ticker(conn, m.ticker)
@@ -121,6 +130,7 @@ def cmd_cycle() -> None:
                 continue
 
             spend_today += fc.cost_usd
+            spend_total += fc.cost_usd
             fee_multiplier = series_cache.get(series_ticker, {}).get("fee_multiplier", 1.0) if series_ticker else 1.0
 
             if fc.resolution_ambiguous:
@@ -155,15 +165,18 @@ def cmd_cycle() -> None:
                 "edge": edge,
                 "contracts": contracts,
                 "fee_multiplier": fee_multiplier,
-                "model": "claude-opus-5",
+                "model": FORECASTER_MODEL,
                 "input_tokens": fc.input_tokens,
                 "output_tokens": fc.output_tokens,
                 "api_cost_usd": fc.cost_usd,
             })
+            conn.commit()  # commit per-row: a paid-for forecast must survive a mid-cycle
+                            # crash/kill, or the spend ledger silently undercounts real cost
             forecasted += 1
 
-    log.info("cycle done: %d forecasted, %d skipped (cadence), %d errors, $%.4f spent today",
-              forecasted, skipped_cadence, errors, spend_today)
+    log.info("cycle done: %d forecasted, %d skipped (cadence), %d errors, "
+              "$%.4f spent today, $%.4f spent lifetime (cap $%.2f)",
+              forecasted, skipped_cadence, errors, spend_today, spend_total, MAX_TOTAL_API_SPEND_USD)
 
 
 def cmd_settle() -> None:

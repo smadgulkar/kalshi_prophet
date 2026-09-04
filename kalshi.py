@@ -146,6 +146,27 @@ def fetch_markets_by_tickers(tickers: list[str], chunk_size: int = 20) -> dict[s
     return out
 
 
+def fetch_book_depth(ticker: str, side: str) -> tuple[float, float]:
+    """Real fillable size/notional at the current best price for one side of
+    one market, via /markets/{ticker}/orderbook (public, no auth — verified
+    2026-09-03). Kalshi's book only stores resting BIDS on both legs; a resting
+    NO bid at price P is mechanically the counterparty to a YES buy at 1-P
+    (1 YES + 1 NO = $1, always), so:
+      - depth to buy YES = size of the highest-priced level in no_dollars
+      - depth to buy NO  = size of the highest-priced level in yes_dollars
+    Returns (contracts, notional_dollars) at that best level; (0.0, 0.0) if
+    that side of the book is empty (quoted price was a stub, not real size)."""
+    data = _get(f"/markets/{ticker}/orderbook", {})
+    book = data.get("orderbook_fp") or {}
+    levels = book.get("no_dollars" if side == "yes" else "yes_dollars") or []
+    if not levels:
+        return (0.0, 0.0)
+    best_price_str, best_size_str = max(levels, key=lambda lvl: float(lvl[0]))
+    contracts = float(best_size_str)
+    fill_price = 1.0 - float(best_price_str)
+    return (contracts, contracts * fill_price)
+
+
 def fetch_series_catalog(max_pages: int = 200) -> dict[str, dict]:
     """Full /series catalog: series_ticker -> {fee_type, fee_multiplier}.
     ~13,700 series as of 2026-09-02 — call this rarely (main.py caches it to disk).
