@@ -49,6 +49,7 @@ class Market:
     status: str
     result: str                # "", "yes", "no"
     volume_24h: int
+    expected_expiration_time: str = ""   # sports: close_time is ~2 weeks out, this is the real resolve time
 
     @property
     def hours_to_close(self) -> float:
@@ -75,6 +76,7 @@ def _parse_market(raw: dict, series_ticker: str, category: str) -> Optional[Mark
             status=raw.get("status", ""),
             result=raw.get("result") or "",
             volume_24h=int(float(raw.get("volume_24h_fp") or 0)),
+            expected_expiration_time=raw.get("expected_expiration_time") or "",
         )
     except (KeyError, ValueError, TypeError) as e:
         log.warning("unparseable market %s: %s", raw.get("ticker"), e)

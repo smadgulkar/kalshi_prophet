@@ -1,0 +1,9 @@
+[Unit]
+Description=Run kalshi-fav-logger.service every 5 minutes (skipped while a previous run is still active)
+
+[Timer]
+OnCalendar=*:0/5
+Persistent=true
+
+[Install]
+WantedBy=timers.target

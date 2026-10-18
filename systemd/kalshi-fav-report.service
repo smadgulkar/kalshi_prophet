@@ -1,0 +1,7 @@
+[Unit]
+Description=Daily report + gate check for the Kalshi favorite-taker paper test
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/shubh/Projects/kalshi_prophet
+ExecStart=/bin/sh -c '/home/shubh/Projects/kalshi_prophet/venv/bin/python fav_logger.py report >> /home/shubh/Projects/kalshi_prophet/logs/fav_report.log 2>&1'

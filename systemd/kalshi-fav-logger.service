@@ -1,0 +1,10 @@
+[Unit]
+Description=Kalshi favorite-taker forward PAPER test — settle + scan (no orders, no credentials)
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/shubh/Projects/kalshi_prophet
+ExecStart=/home/shubh/Projects/kalshi_prophet/venv/bin/python fav_logger.py settle
+ExecStart=/home/shubh/Projects/kalshi_prophet/venv/bin/python fav_logger.py scan
+TimeoutStartSec=1800
