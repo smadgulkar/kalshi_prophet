@@ -1,0 +1,15 @@
+[Unit]
+Description=Kalshi longshot-maker engine — forward paper test, 1-6h lead window (hypothesis arm)
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/shubh/Projects/kalshi_prophet
+ExecStart=/home/shubh/Projects/kalshi_prophet/venv/bin/python kalshi_engine.py --series KXBTCD KXETHD --min-hours 1 --max-hours 6 --db data/kalshi_fwd_1_6h.db
+Restart=always
+RestartSec=30
+StandardOutput=append:/home/shubh/Projects/kalshi_prophet/logs/fwd_1_6h.log
+StandardError=append:/home/shubh/Projects/kalshi_prophet/logs/fwd_1_6h.log
+
+[Install]
+WantedBy=default.target

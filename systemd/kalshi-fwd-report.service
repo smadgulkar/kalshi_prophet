@@ -1,0 +1,7 @@
+[Unit]
+Description=Daily status snapshot of the Kalshi longshot-maker forward paper tests
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/shubh/Projects/kalshi_prophet
+ExecStart=/bin/sh -c '/home/shubh/Projects/kalshi_prophet/venv/bin/python fwd_report.py >> /home/shubh/Projects/kalshi_prophet/logs/fwd_report.log 2>&1'

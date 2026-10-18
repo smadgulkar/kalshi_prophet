@@ -1,0 +1,15 @@
+[Unit]
+Description=Kalshi longshot-maker engine — forward paper test, full 1-72h window (known-failing control arm)
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/shubh/Projects/kalshi_prophet
+ExecStart=/home/shubh/Projects/kalshi_prophet/venv/bin/python kalshi_engine.py --series KXBTCD KXETHD --min-hours 1 --max-hours 72 --db data/kalshi_fwd_control.db
+Restart=always
+RestartSec=30
+StandardOutput=append:/home/shubh/Projects/kalshi_prophet/logs/fwd_control.log
+StandardError=append:/home/shubh/Projects/kalshi_prophet/logs/fwd_control.log
+
+[Install]
+WantedBy=default.target
