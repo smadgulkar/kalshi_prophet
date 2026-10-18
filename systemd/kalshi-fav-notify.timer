@@ -1,0 +1,9 @@
+[Unit]
+Description=One-shot reminder: Telegram the report after the 2026-10-19 09:05 run
+
+[Timer]
+OnCalendar=2026-10-19 09:10:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

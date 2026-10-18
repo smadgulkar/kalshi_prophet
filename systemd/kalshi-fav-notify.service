@@ -1,0 +1,8 @@
+[Unit]
+Description=Telegram the Kalshi favorite-taker report + longshot-maker snapshot
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/shubh/Projects/kalshi_prophet
+ExecStart=/bin/sh -c '/home/shubh/Projects/kalshi_prophet/venv/bin/python fav_notify.py >> /home/shubh/Projects/kalshi_prophet/logs/fav_notify.log 2>&1'
